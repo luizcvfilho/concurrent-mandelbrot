@@ -14,7 +14,7 @@
 #define Y_MIN   -1.0
 #define Y_MAX    1.0
 
-void save_image(const char *filename, unsigned char image[HEIGHT][WIDTH][3]) {
+void save_image(const char *filename, unsigned char *image) {
     FILE *f = fopen(filename, "wb");
     fprintf(f, "P6\n%d %d\n255\n", WIDTH, HEIGHT);
     fwrite(image, 1, WIDTH * HEIGHT * 3, f);
@@ -28,7 +28,11 @@ int main(int argc, char *argv[]) {
     printf("Número máximo de iterações: %d\n", MAX_ITER);
     printf("Intervalo de valores: x = [%.2f, %.2f], y = [%.2f, %.2f]\n", X_MIN, X_MAX, Y_MIN, Y_MAX);
 
-    unsigned char image[HEIGHT][WIDTH][3];
+    unsigned char *image = malloc(WIDTH * HEIGHT * 3);
+    if (!image) {
+        fprintf(stderr, "Erro ao alocar memória para a imagem.\n");
+        exit(1);
+    }
 
     gettimeofday(&start, NULL);
 
@@ -45,16 +49,16 @@ int main(int argc, char *argv[]) {
                     break;
             }
             if (iter == MAX_ITER) {
-                image[y][x][0] = 0;
-                image[y][x][1] = 0;
-                image[y][x][2] = 0;
+                image[(y * WIDTH + x) * 3 + 0] = 0;
+                image[(y * WIDTH + x) * 3 + 1] = 0;
+                image[(y * WIDTH + x) * 3 + 2] = 0;
             } else {
                 int r = (int)(255.0 * sin(0.016 * iter + 4));
                 int g = (int)(255.0 * sin(0.013 * iter + 2));
                 int b = (int)(255.0 * sin(0.01 * iter + 1));
-                image[y][x][0] = r < 0 ? 0 : r > 255 ? 255 : r;
-                image[y][x][1] = g < 0 ? 0 : g > 255 ? 255 : g;
-                image[y][x][2] = b < 0 ? 0 : b > 255 ? 255 : b;
+                image[(y * WIDTH + x) * 3 + 0] = r < 0 ? 0 : r > 255 ? 255 : r;
+                image[(y * WIDTH + x) * 3 + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+                image[(y * WIDTH + x) * 3 + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
             }
         }
     }
@@ -65,5 +69,8 @@ int main(int argc, char *argv[]) {
 
     save_image("mandelbrot.ppm", image);
     printf("Imagem salva como mandelbrot.ppm\n");
+
+    free(image);
+
     return 0;
 }
